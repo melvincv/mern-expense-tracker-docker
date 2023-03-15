@@ -9,9 +9,26 @@ services:
     restart: unless-stopped
     ports:
       - 5000:5000
+    depends_on:
+      - mongodb
+
   client:
     image: expense-tracker-client
     build: ./client
     restart: unless-stopped
     ports:
-      - 80:80
+      - 8000:80
+    depends_on:
+      - server
+
+  mongodb:
+    image: mongo:6.0
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: 
+      MONGO_INITDB_ROOT_PASSWORD: 
+    volumes:
+      - db-data:/data/db
+      
+volumes:
+  db-data:

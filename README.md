@@ -43,11 +43,14 @@ multipass shell web01
 git clone https://github.com/melvincv/mern-expense-tracker-docker.git
 cd mern-expense-tracker-docker
 ```
+Create a `.env` file to hold secret variables for docker compose.
 
-Create a Mongo DB Cluster on Atlas or Local and add the connection string to the `compose.yml` file.
+Content of `.env` file should be like:
 
 ```
-MONGO_URI: mongodb+srv:// ...
+MONGO_URI=mongodb://admin:xxxxxxxxxx@mongodb:27017/
+MONGO_INITDB_ROOT_USERNAME=admin
+MONGO_INITDB_ROOT_PASSWORD=xxxxxxxxxx
 ```
 
 Bring up the stack:
