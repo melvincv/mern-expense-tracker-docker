@@ -86,11 +86,12 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false # prevent sudo, etc.
             privileged: false               # prevent acting like host root
-          terminationGracePeriodSeconds: 300 # default is 30, but you may need more time to gracefully shutdown (HTTP long polling, user uploads, etc)
           volumes:
             - name: mongo-data
               persistentVolumeClaim:
                 claimName: mongo-pvc
+      terminationGracePeriodSeconds: 300 # default is 30, but you may need more time to gracefully shutdown (HTTP long polling, user uploads, etc)
+
 ---
 apiVersion: v1
 kind: Service
