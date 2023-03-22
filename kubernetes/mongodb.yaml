@@ -1,0 +1,105 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mongo-pv
+  namespace: expensetracker
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  local:
+    path: /mnt/dbdata
+  # nodeAffinity:
+  #   required:
+  #     nodeSelectorTerms:
+  #     - matchExpressions:
+  #       - key: kubernetes.io/hostname
+  #         operator: In
+  #         values:
+  #         - MELZ-PC
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongo-pvc
+  namespace: expensetracker
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: local-storage
+  selector:
+    matchLabels:
+      name: mongo-pv
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb
+  namespace: expensetracker
+  labels:
+    app: mongodb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb
+  template:
+    metadata:
+      labels:
+        app: mongodb
+    spec:
+      containers:
+        - name: mongodb
+          image: mongo:6.0
+          ports:
+            - containerPort: 27017
+          volumeMounts:
+            - name: mongo-data
+              mountPath: /data/db
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mongo.sec
+                  key: mongo.root.user
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongo.sec
+                  key: mongo.root.pass
+          resources:             # Because if limits = requests then QoS is set to "Guaranteed"
+            limits:
+              memory: "1024Mi"    # If container uses over 500MB it is killed (OOM)
+              cpu: "2"          # Not normally needed, unless you need to protect other workloads or QoS must be "Guaranteed"
+            requests:
+              memory: "512Mi"    # Scheduler finds a node where 500MB is available
+              cpu: "500m"          # Scheduler finds a node where 1 vCPU is available
+          # per-container security context
+          # lock down privileges inside the container
+          securityContext:
+            allowPrivilegeEscalation: false # prevent sudo, etc.
+            privileged: false               # prevent acting like host root
+          terminationGracePeriodSeconds: 300 # default is 30, but you may need more time to gracefully shutdown (HTTP long polling, user uploads, etc)
+          volumes:
+            - name: mongo-data
+              persistentVolumeClaim:
+                claimName: mongo-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb-service
+  namespace: expensetracker
+spec:
+  selector:
+    app: mongodb
+  ports:
+    - name: mongodb
+      port: 27017
+      targetPort: 27017
