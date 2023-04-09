@@ -62,7 +62,7 @@ spec:
     spec:
       containers:
       - name: et-client
-        image: melvincv/expense-tracker-client
+        image: melvincv/expense-tracker-client:1.2
         ports:
         - containerPort: 80
           protocol: TCP
@@ -88,7 +88,7 @@ metadata:
   namespace: expensetracker
 spec:
   selector:
-    d-app: et-server
+    app: et-server
   ports:
     - protocol: TCP
       port: 5000
@@ -101,13 +101,9 @@ metadata:
   name: et-client-service
   namespace: expensetracker
 spec:
-  type: NodePort
   selector:
-    d-app: et-client
+    app: et-client
   ports:
-      # By default and for convenience, the `targetPort` is set to the same value as the `port` field.
-    - port: 80
+    - protocol: TCP
+      port: 80
       targetPort: 80
-      # Optional field
-      # By default and for convenience, the Kubernetes control plane will allocate a port from a range (default: 30000-32767)
-      nodePort: 30001
